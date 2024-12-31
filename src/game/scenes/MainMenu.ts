@@ -4,9 +4,17 @@ import { EventBus } from "../EventBus";
 
 export class MainMenu extends Scene {
     background: GameObjects.Image;
+    star: GameObjects.Sprite;
     logo: GameObjects.Image;
     title: GameObjects.Text;
     logoTween: Phaser.Tweens.Tween | null;
+    cursors: Phaser.Types.Input.Keyboard.CursorKeys;
+    wasd: {
+        up: Phaser.Input.Keyboard.Key;
+        down: Phaser.Input.Keyboard.Key;
+        left: Phaser.Input.Keyboard.Key;
+        right: Phaser.Input.Keyboard.Key;
+    };
 
     constructor() {
         super("MainMenu");
@@ -14,7 +22,10 @@ export class MainMenu extends Scene {
 
     create() {
         this.background = this.add.image(0, 0, "background").setOrigin(0, 0);
-
+        this.star = this.add
+            .sprite(0, 720, "star")
+            .setDepth(100)
+            .setOrigin(0, 1);
         this.logo = this.add.image(512, 300, "logo").setDepth(100);
 
         this.title = this.add
@@ -29,7 +40,31 @@ export class MainMenu extends Scene {
             .setOrigin(0.5)
             .setDepth(100);
 
+        this.cursors = this.input.keyboard!.createCursorKeys();
+        this.wasd = {
+            up: this.input.keyboard!.addKey("W"),
+            down: this.input.keyboard!.addKey("S"),
+            left: this.input.keyboard!.addKey("A"),
+            right: this.input.keyboard!.addKey("D"),
+        };
+        this.cameras.main.startFollow(this.star, true, 0.1, 0.1);
+        this.cameras.main.setBounds(0, 0, 2442, 1080);
         EventBus.emit("current-scene-ready", this);
+    }
+
+    update() {
+        if (this.cursors) {
+            if (
+                (this.cursors.left.isDown || this.wasd.left.isDown) &&
+                (this.cursors.right.isDown || this.wasd.right.isDown)
+            ) {
+                return;
+            } else if (this.cursors.left.isDown || this.wasd.left.isDown) {
+                this.star.setX(this.star.x - 4);
+            } else if (this.cursors.right.isDown || this.wasd.right.isDown) {
+                this.star.setX(this.star.x + 4);
+            }
+        }
     }
 
     changeScene() {
