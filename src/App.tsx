@@ -1,6 +1,8 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { IRefPhaserGame, PhaserGame } from "./game/PhaserGame";
 import { MainMenu } from "./game/scenes/MainMenu";
+import { EventBus } from "./game/EventBus";
+import VideoPlayerOverlay from "./components/VideoPlayerOverlay";
 
 function App() {
     // The sprite can only be moved in the MainMenu Scene
@@ -9,6 +11,8 @@ function App() {
     //  References to the PhaserGame component (game and scene are exposed)
     const phaserRef = useRef<IRefPhaserGame | null>(null);
     const [spritePosition, setSpritePosition] = useState({ x: 0, y: 0 });
+
+    const [showPlayer, setShowPlayer] = useState(false);
 
     const changeScene = () => {
         if (phaserRef.current) {
@@ -64,9 +68,22 @@ function App() {
         setCanMoveSprite(scene.scene.key !== "MainMenu");
     };
 
+    useEffect(() => {
+        // Listen for the custom event from the PhaserGame component
+        EventBus.on("showVideoPlayer", () => {
+            console.log("asd");
+            setShowPlayer(true);
+        });
+    }, []);
+
     return (
         <div id="app">
             <PhaserGame ref={phaserRef} currentActiveScene={currentScene} />
+            <VideoPlayerOverlay
+                isVisible={showPlayer}
+                onClose={() => setShowPlayer(false)}
+                playlistId="YOUR_PLAYLIST_ID"
+            />
             {/* <div>
                 <div>
                     <button className="button" onClick={changeScene}>

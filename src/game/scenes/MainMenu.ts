@@ -1,10 +1,10 @@
-import { GameObjects, Scene } from "phaser";
+import { GameObjects, Physics, Scene } from "phaser";
 
 import { EventBus } from "../EventBus";
 
 export class MainMenu extends Scene {
     background: GameObjects.Image;
-    star: GameObjects.Sprite;
+    star: Physics.Arcade.Sprite;
     logo: GameObjects.Image;
     title: GameObjects.Text;
     logoTween: Phaser.Tweens.Tween | null;
@@ -15,6 +15,10 @@ export class MainMenu extends Scene {
         left: Phaser.Input.Keyboard.Key;
         right: Phaser.Input.Keyboard.Key;
     };
+    tv: Phaser.Types.Physics.Arcade.SpriteWithStaticBody;
+    tvZone: Phaser.GameObjects.Rectangle;
+    spaceKey: Phaser.Input.Keyboard.Key;
+    dimLayer: Phaser.GameObjects.Rectangle;
 
     constructor() {
         super("MainMenu");
@@ -22,11 +26,21 @@ export class MainMenu extends Scene {
 
     create() {
         this.background = this.add.image(0, 0, "background").setOrigin(0, 0);
-        this.star = this.add
+        this.star = this.physics.add
             .sprite(0, 720, "star")
-            .setDepth(100)
+            .setDepth(2)
             .setOrigin(0, 1);
-        this.logo = this.add.image(512, 300, "logo").setDepth(100);
+        this.logo = this.add.image(512, 300, "logo").setDepth(0);
+        this.tv = this.physics.add.staticSprite(700, 630, "tv").setDepth(1);
+        this.tvZone = this.add.rectangle(700, 630, 64, 400, 0x0000ff, 0.2); // Semi-transparent for debugging
+        this.physics.add.existing(this.tvZone, true);
+        this.physics.add.overlap(
+            this.star,
+            this.tvZone,
+            this.handleInteraction,
+            undefined,
+            this
+        );
 
         this.title = this.add
             .text(512, 460, "Main Menu", {
@@ -38,18 +52,51 @@ export class MainMenu extends Scene {
                 align: "center",
             })
             .setOrigin(0.5)
-            .setDepth(100);
-
+            .setDepth(0);
         this.cursors = this.input.keyboard!.createCursorKeys();
+
         this.wasd = {
             up: this.input.keyboard!.addKey("W"),
             down: this.input.keyboard!.addKey("S"),
             left: this.input.keyboard!.addKey("A"),
             right: this.input.keyboard!.addKey("D"),
         };
+        this.spaceKey = this.input.keyboard!.addKey(
+            Phaser.Input.Keyboard.KeyCodes.SPACE
+        );
+
         this.cameras.main.startFollow(this.star, true, 0.1, 0.1);
         this.cameras.main.setBounds(0, 0, 2442, 1080);
         EventBus.emit("current-scene-ready", this);
+    }
+
+    handleInteraction() {
+        if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
+            console.log("Player interacted with the TV!");
+            // emit event from scene
+            this.events.emit("showVideoPlayer", {
+                playlistId: "PLCK_Hwh3LTgFM4BH5R4zgYR5uTPTnT_o0",
+            });
+            this.createDimLayer();
+        }
+    }
+
+    createDimLayer() {
+        this.dimLayer = this.add.rectangle(
+            0,
+            0,
+            this.scale.width,
+            this.scale.height,
+            0x000000,
+            0.5
+        );
+        this.dimLayer.setOrigin(0, 0);
+        this.dimLayer.setDepth(3);
+        this.dimLayer.setInteractive();
+    }
+
+    removeDimLayer() {
+        this.dimLayer.destroy();
     }
 
     update() {
@@ -64,6 +111,10 @@ export class MainMenu extends Scene {
             } else if (this.cursors.right.isDown || this.wasd.right.isDown) {
                 this.star.setX(this.star.x + 4);
             }
+        }
+        // If the star is touching the tv, console log
+        if (this.star.getBounds().contains(this.tv.x, this.tv.y)) {
+            console.log("Star is touching the TV!");
         }
     }
 
