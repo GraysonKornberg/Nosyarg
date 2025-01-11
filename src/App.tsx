@@ -12,7 +12,8 @@ function App() {
     const phaserRef = useRef<IRefPhaserGame | null>(null);
     const [spritePosition, setSpritePosition] = useState({ x: 0, y: 0 });
 
-    const [showPlayer, setShowPlayer] = useState(false);
+    const [isVisible, setIsVisible] = useState(false);
+    const [playlistId, setPlaylistId] = useState("");
 
     const changeScene = () => {
         if (phaserRef.current) {
@@ -69,20 +70,31 @@ function App() {
     };
 
     useEffect(() => {
-        // Listen for the custom event from the PhaserGame component
-        EventBus.on("showVideoPlayer", () => {
-            console.log("asd");
-            setShowPlayer(true);
-        });
+        const handleShowPlayer = ({ playlistId }: { playlistId: string }) => {
+            setPlaylistId(playlistId);
+            setIsVisible(true);
+        };
+
+        const handleClosePlayer = () => {
+            setIsVisible(false);
+        };
+
+        EventBus.on("showVideoPlayer", handleShowPlayer);
+        EventBus.on("closeVideoPlayer", handleClosePlayer);
+
+        return () => {
+            EventBus.off("showVideoPlayer", handleShowPlayer);
+            EventBus.off("closeVideoPlayer", handleClosePlayer);
+        };
     }, []);
 
     return (
         <div id="app">
             <PhaserGame ref={phaserRef} currentActiveScene={currentScene} />
             <VideoPlayerOverlay
-                isVisible={showPlayer}
-                onClose={() => setShowPlayer(false)}
-                playlistId="YOUR_PLAYLIST_ID"
+                isVisible={isVisible}
+                onClose={() => setIsVisible(false)}
+                playlistId={playlistId}
             />
             {/* <div>
                 <div>

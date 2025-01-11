@@ -74,7 +74,7 @@ export class MainMenu extends Scene {
         if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
             console.log("Player interacted with the TV!");
             // emit event from scene
-            this.events.emit("showVideoPlayer", {
+            EventBus.emit("showVideoPlayer", {
                 playlistId: "PLCK_Hwh3LTgFM4BH5R4zgYR5uTPTnT_o0",
             });
             this.createDimLayer();
